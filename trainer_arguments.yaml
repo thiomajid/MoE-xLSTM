@@ -6,7 +6,7 @@ features: ["text"]
 
 # train_subset: "default"
 train_split: "train"
-train_samples: 100000
+train_samples: 10000
 
 eval_subset: "CC-MAIN-2018-43"
 eval_split: "train"
