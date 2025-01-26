@@ -1,0 +1,46 @@
+# Custom training arguments
+tokenizer: "HuggingFaceTB/SmolLM2-1.7B"
+xlstm_config_path: "./model_config.yaml"
+dataset_url: "roneneldan/TinyStories"
+features: ["text"]
+
+# train_subset: "default"
+train_split: "train"
+train_samples: 100000
+
+eval_subset: "CC-MAIN-2018-43"
+eval_split: "train"
+eval_samples: 1000
+
+# HF TrainerArguments arguments
+num_train_epochs: 4
+gradient_accumulation_steps: 4
+per_device_train_batch_size: 8
+per_device_eval_batch_size: 8
+
+# optim args
+temperature: 2
+learning_rate: 0.0002
+weight_decay: 0.001
+warmup_ratio: 0.1
+optim: "adamw_torch"
+lr_scheduler_type: "cosine"
+torch_compile: true
+fp16: true
+use_cpu: false
+gradient_checkpointing: false
+
+output_dir: "artifacts"
+logging_dir: "artifacts"
+report_to: "tensorboard"
+logging_steps: 100
+save_steps: 100
+hub_private_repo: false
+save_total_limit: 2
+load_best_model_at_end: true
+eval_strategy: "steps"
+
+push_to_hub: true
+resume_from_checkpoint: "artifacts"
+hub_model_id: "thiomajid/moe-xlstm"
+remove_unused_columns: false

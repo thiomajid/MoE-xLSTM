@@ -1,6 +1,7 @@
 from dataclasses import asdict
-from typing import Any, Dict, Optional
+from typing import Any, Optional
 
+import yaml
 from transformers import PretrainedConfig
 from xlstm import (
     FeedForwardConfig,
@@ -19,6 +20,7 @@ class MoExLSTMConfig(PretrainedConfig):
         self,
         num_experts: int = 4,
         top_k_experts: int = 2,
+        gate_bias: bool = False,
         xlstm_config: Optional[xLSTMLMModelConfig] = None,
         **kwargs,
     ):
@@ -30,25 +32,33 @@ class MoExLSTMConfig(PretrainedConfig):
         self.xlstm_config = xlstm_config
         self.num_experts = num_experts
         self.top_k_experts = top_k_experts
+        self.gate_bias = gate_bias
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         output = super().to_dict()
 
         # Making sure that 'xlstm_config' is serialized
         output["xlstm_config"] = asdict(self.xlstm_config)
         return output
 
+    @staticmethod
+    def from_yaml(file_path: str):
+        with open(file_path, "r") as file:
+            config_dict = yaml.safe_load(file)
+
+        return MoExLSTMConfig.from_dict(config_dict)
+
     @classmethod
     def from_dict(cls, config_dict, **kwargs):
-        xlstm_config_dict: Dict[str, any] = config_dict.pop("xlstm_config")
+        xlstm_config_dict: dict[str, Any] = config_dict.pop("xlstm_config")
         xlstm_config = cls.parse_xlstm_config_dict(xlstm_config_dict)
 
         return cls(xlstm_config=xlstm_config, **config_dict)
 
     @staticmethod
-    def parse_xlstm_config_dict(config_dict: Dict[str, any]):
+    def parse_xlstm_config_dict(config_dict: dict[str, Any]):
         # mLSTM block config deserialization
-        mlstm_block_dict: Dict[str, any] = config_dict.pop("mlstm_block", None)
+        mlstm_block_dict: dict[str, Any] = config_dict.pop("mlstm_block", None)
         mlstm_block = None
         if mlstm_block_dict:
             mlstm_block = mLSTMBlockConfig(
@@ -57,7 +67,7 @@ class MoExLSTMConfig(PretrainedConfig):
             )
 
         # sLSTM block config deserialization
-        slstm_block_dict: Dict[str, any] = config_dict.pop("slstm_block", None)
+        slstm_block_dict: dict[str, Any] = config_dict.pop("slstm_block", None)
         slstm_block = None
 
         if slstm_block_dict:
