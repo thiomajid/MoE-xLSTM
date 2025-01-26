@@ -53,3 +53,13 @@ class MoExLSTMTrainingArguments(TrainingArguments):
         default=1000,
         metadata={"help": "Number of samples to use for evaluation from the dataset."},
     )
+
+    features: list[str] = field(
+        default_factory=list,
+        metadata={"help": "The features to use from the dataset."},
+    )
+
+    temperature: float = field(
+        default=1.0,
+        metadata={"help": "Temperature to use for sampling."},
+    )
