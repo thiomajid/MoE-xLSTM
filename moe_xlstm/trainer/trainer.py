@@ -17,7 +17,7 @@ class MoExLSTMTrainer(Trainer):
 
         self.tokenizer = tokenizer
 
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
         output: CausalLMOutputWithPast = model(**inputs)
 
         return (output.loss, output) if return_outputs else output.loss
