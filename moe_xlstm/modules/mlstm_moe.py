@@ -57,6 +57,9 @@ class mLSTMMoELayer(nn.Module):
             if top_x.numel() == 0:  # Skip unused experts
                 continue
 
+            if top_x.max() >= flat_hidden_states.size(0):
+                raise IndexError("Index out of bounds in top_x")
+
             # Reshape to 3D for mLSTMBlock
             current_state = flat_hidden_states[top_x]  # (num_selected, D)
             current_state = current_state.unsqueeze(1)  # (num_selected, 1, D)

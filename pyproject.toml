@@ -13,3 +13,8 @@ dependencies = [
     "transformers>=4.45.2",
     "xlstm>=1.0.6",
 ]
+
+[dependency-groups]
+dev = [
+    "tensorboardx>=2.6.2.2",
+]
