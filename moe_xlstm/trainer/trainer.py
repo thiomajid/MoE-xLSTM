@@ -24,7 +24,7 @@ class MoExLSTMTrainer(Trainer):
 
         # Store which layers to monitor - default to all layers if not specified
         self.monitored_layers = (
-            list(range(model.moe.layers))
+            list(range(len(model.moe.layers)))
             if args.monitored_layers == "all"
             else args.monitored_layers
         )
