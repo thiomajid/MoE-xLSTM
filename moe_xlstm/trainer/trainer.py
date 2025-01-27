@@ -29,7 +29,7 @@ class MoExLSTMTrainer(Trainer):
             else args.monitored_layers
         )
 
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
         """Compute loss and collect MoE metrics during training."""
         # Forward pass with layer outputs
         outputs: MoECausalLMOutput = model(**inputs, return_layers_outputs=True)
