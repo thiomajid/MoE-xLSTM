@@ -1,4 +1,5 @@
 from dataclasses import dataclass, field
+from typing import Any
 
 from transformers import TrainingArguments
 
@@ -59,7 +60,12 @@ class MoExLSTMTrainingArguments(TrainingArguments):
         metadata={"help": "The features to use from the dataset."},
     )
 
-    temperature: float = field(
-        default=1.0,
-        metadata={"help": "Temperature to use for sampling."},
+    monitored_layers: Any = field(
+        default="all",
+        metadata={"help": "Layers to monitor during training."},
+    )
+
+    router_loss_coef: float = field(
+        default=0.001,
+        metadata={"help": "Coefficient for the router loss."},
     )

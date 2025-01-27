@@ -5,6 +5,7 @@ from torch import nn
 from xlstm import mLSTMBlock
 
 from moe_xlstm.config import MoExLSTMConfig
+from moe_xlstm.modules.output import MoELayerOutput
 
 
 class mLSTMMoELayer(nn.Module):
@@ -77,4 +78,8 @@ class mLSTMMoELayer(nn.Module):
             batch_size, sequence_length, hidden_dim
         )
 
-        return final_hidden_states, router_logits
+        return MoELayerOutput(
+            router_logits=router_logits,
+            routing_weights=routing_weights,
+            hidden_states=final_hidden_states,
+        )

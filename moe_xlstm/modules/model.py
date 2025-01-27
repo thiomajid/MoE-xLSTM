@@ -7,10 +7,10 @@ import torch.nn.functional as F
 from einops import rearrange
 from torch import nn
 from transformers import PreTrainedModel
-from transformers.modeling_outputs import CausalLMOutputWithPast
 
 from moe_xlstm.config import MoExLSTMConfig
 from moe_xlstm.modules.mlstm_moe import mLSTMMoELayer
+from moe_xlstm.modules.output import MoECausalLMOutput, MoELayerOutput
 
 
 class MoExLSTM(nn.Module):
@@ -33,12 +33,22 @@ class MoExLSTM(nn.Module):
             [mLSTMMoELayer(config) for _ in range(config.xlstm_config.num_blocks)]
         )
 
-    def forward(self, input_ids: torch.Tensor):
+    def forward(
+        self,
+        input_ids: torch.Tensor,
+        return_layers_outputs: bool = False,
+        **kwargs,
+    ):
+        layer_outputs = [] if return_layers_outputs else None
+
         hidden_states = self.token_embedding(input_ids)
         for layer in self.layers:
-            hidden_states, _ = layer(hidden_states)
+            output: MoELayerOutput = layer(hidden_states)
 
-        return hidden_states
+            # set the hidden states to the output of the last layer for the next layer
+            hidden_states = output.hidden_states
+
+        return hidden_states, layer_outputs
 
 
 class MoExLSTMForCausalLM(PreTrainedModel):
@@ -49,7 +59,7 @@ class MoExLSTMForCausalLM(PreTrainedModel):
 
         self.config = config
 
-        self.model = MoExLSTM(config)
+        self.moe = MoExLSTM(config)
         self.lm_head = nn.Linear(
             in_features=config.xlstm_config.embedding_dim,
             out_features=config.xlstm_config.vocab_size,
@@ -57,15 +67,19 @@ class MoExLSTMForCausalLM(PreTrainedModel):
         )
 
         if config.xlstm_config.tie_weights:
-            self.lm_head.weight = self.model.token_embedding.weight
+            self.lm_head.weight = self.moe.token_embedding.weight
 
     def forward(
         self,
         input_ids: torch.Tensor,
         labels: Optional[torch.Tensor] = None,
+        return_layers_outputs: bool = False,
         **kwargs,
     ):
-        hidden_states = self.model(input_ids)
+        hidden_states, layers_output = self.moe(
+            input_ids, return_layers_outputs=return_layers_outputs
+        )
+
         logits: torch.Tensor = self.lm_head(hidden_states)
 
         loss = None
@@ -86,10 +100,11 @@ class MoExLSTMForCausalLM(PreTrainedModel):
                 target=shift_labels,
             )
 
-        return CausalLMOutputWithPast(
+        return MoECausalLMOutput(
             logits=logits,
             loss=loss,
             hidden_states=hidden_states,
+            layers_outputs=layers_output,
             attentions=None,
         )
 
