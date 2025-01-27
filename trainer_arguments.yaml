@@ -9,7 +9,7 @@ train_split: "train"
 train_samples: 5000
 
 eval_subset: "fineweb-edu-dedup"
-eval_split: "validation"
+eval_split: "train"
 eval_samples: 1000
 
 # HF TrainerArguments arguments
