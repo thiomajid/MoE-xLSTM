@@ -4,9 +4,9 @@ gate_bias: false
 
 xlstm_config:
   vocab_size: 32_000
-  context_length: 256
-  num_blocks: 12
-  embedding_dim: 256
+  context_length: 512
+  num_blocks: 24
+  embedding_dim: 960
 
   mlstm_block:
     mlstm:

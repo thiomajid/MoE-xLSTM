@@ -3,6 +3,7 @@ from typing import cast
 import torch
 from tqdm import tqdm
 from transformers import (
+    AutoConfig,
     AutoTokenizer,
     HfArgumentParser,
 )
@@ -10,7 +11,7 @@ from transformers import (
 from moe_xlstm.config import MoExLSTMConfig
 from moe_xlstm.modules.model import MoExLSTMForCausalLM
 from moe_xlstm.trainer.arguments import MoExLSTMTrainingArguments
-from moe_xlstm.utils.weights import count_parameters
+from moe_xlstm.utils.weights import count_inference_parameters, count_parameters
 
 if __name__ == "__main__":
     parser = HfArgumentParser(MoExLSTMTrainingArguments)
@@ -18,9 +19,12 @@ if __name__ == "__main__":
     args = cast(MoExLSTMTrainingArguments, args)
 
     tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
+    ref_config = AutoConfig.from_pretrained(args.tokenizer)
     config = MoExLSTMConfig.from_yaml(args.xlstm_config_path)
 
     config.xlstm_config.vocab_size = tokenizer.vocab_size
+    # config.xlstm_config.embedding_dim = ref_config.hidden_size
+    # config.xlstm_config.num_blocks = ref_config.num_hidden_layers
 
     moe = MoExLSTMForCausalLM(config)
     print(count_parameters(moe))
@@ -37,3 +41,5 @@ if __name__ == "__main__":
         inputs["input_ids"] = torch.cat([inputs["input_ids"], next_token], dim=-1)
 
     print(tokenizer.decode(inputs["input_ids"].squeeze().tolist()))
+
+    print(count_inference_parameters(moe))
