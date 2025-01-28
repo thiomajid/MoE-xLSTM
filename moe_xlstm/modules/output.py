@@ -15,3 +15,4 @@ class MoELayerOutput:
 @dataclass
 class MoECausalLMOutput(CausalLMOutputWithPast):
     layers_outputs: Optional[list[MoELayerOutput]] = None
+    output_per_layer: dict[str, dict] = None

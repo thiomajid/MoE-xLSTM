@@ -47,6 +47,8 @@ class MoExLSTM(nn.Module):
 
             # set the hidden states to the output of the last layer for the next layer
             hidden_states = output.hidden_states
+            if return_layers_outputs:
+                layer_outputs.append(output)
 
         return hidden_states, layer_outputs
 
@@ -77,7 +79,8 @@ class MoExLSTMForCausalLM(PreTrainedModel):
         **kwargs,
     ):
         hidden_states, layers_output = self.moe(
-            input_ids, return_layers_outputs=return_layers_outputs
+            input_ids,
+            return_layers_outputs=return_layers_outputs,
         )
 
         logits: torch.Tensor = self.lm_head(hidden_states)

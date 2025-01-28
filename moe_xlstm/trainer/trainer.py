@@ -17,10 +17,10 @@ class MoExLSTMTrainer(Trainer):
         tokenizer: AutoTokenizer,
         **kwargs,
     ):
-        super().__init__(model=model, args=args, tokenizer=tokenizer, **kwargs)
+        super().__init__(model=model, args=args, processing_class=tokenizer, **kwargs)
 
         # Initialize TensorBoard writer
-        self.tb_writer = SummaryWriter(log_dir=args.logging_dir)
+        self.tb_writer = SummaryWriter(log_dir=args.logging_dir, filename_suffix="_moe")
 
         # Store which layers to monitor - default to all layers if not specified
         self.monitored_layers = (
@@ -40,6 +40,8 @@ class MoExLSTMTrainer(Trainer):
 
         # Process each layer's outputs
         if outputs.layers_outputs is not None:
+            outputs.output_per_layer = dict()
+
             for layer_idx, layer_output in enumerate(outputs.layers_outputs):
                 if layer_idx in self.monitored_layers:
                     # Compute metrics for this layer
@@ -49,13 +51,13 @@ class MoExLSTMTrainer(Trainer):
                     total_router_z_loss += metrics["router_z_loss"]
                     total_router_aux_loss += metrics["router_aux_loss"]
 
-                    # Log metrics if it's a logging step
-                    if self.state.global_step % self.args.logging_steps == 0:
-                        self._log_moe_metrics(
-                            layer_idx=layer_idx,
-                            metrics=metrics,
-                            prefix="train",
-                        )
+                    self._log_moe_metrics(
+                        layer_idx=layer_idx,
+                        metrics=metrics,
+                        prefix="train",
+                    )
+
+                    outputs.output_per_layer[f"Layer {layer_idx}"] = metrics
 
         # Combine all losses
         router_loss_coef = getattr(self.args, "router_loss_coef", 0.001)
@@ -108,15 +110,11 @@ class MoExLSTMTrainer(Trainer):
         # Log all metrics in a single dictionary
         self.log(
             {
-                f"{prefix}/layer_{layer_idx}/expert_usage_std": expert_usage.std().item(),
-                f"{prefix}/layer_{layer_idx}/expert_usage_max": expert_usage.max().item(),
-                f"{prefix}/layer_{layer_idx}/expert_usage_min": expert_usage.min().item(),
-                f"{prefix}/layer_{layer_idx}/router_z_loss": metrics[
-                    "router_z_loss"
-                ].item(),
-                f"{prefix}/layer_{layer_idx}/router_aux_loss": metrics[
-                    "router_aux_loss"
-                ].item(),
+                f"layer_{layer_idx}-expert_usage_std": expert_usage.std().item(),
+                f"layer_{layer_idx}-expert_usage_max": expert_usage.max().item(),
+                f"layer_{layer_idx}-expert_usage_min": expert_usage.min().item(),
+                f"layer_{layer_idx}-router_z_loss": metrics["router_z_loss"].item(),
+                f"layer_{layer_idx}-router_aux_loss": metrics["router_aux_loss"].item(),
             },
         )
 
